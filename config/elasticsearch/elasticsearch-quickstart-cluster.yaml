@@ -1,0 +1,71 @@
+apiVersion: v1
+data:
+  users: YWRtaW4tdXNlcjokMmEkMTIkQXV1bG0yZjMuOTBNSFB3aU5FUmFYdWNVUVZwLk1rb2wybFo5dTlOOC93a3BqSUZuN2F1aHk=
+  users_roles: c3VwZXJ1c2VyOmFkbWluLXVzZXI=
+kind: Secret
+metadata:
+  name: basic-auth
+  namespace: elasticsearch
+type: Opaque
+
+---
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: quickstart
+  namespace: elasticsearch
+spec:
+  auth:
+    fileRealm:
+    - secretName: basic-auth
+  nodeSets:
+  - config:
+      node.store.allow_mmap: false
+      node.roles:
+      - master
+      - data
+      - ingest
+      xpack.monitoring.collection.enabled: true
+      xpack.monitoring.elasticsearch.collection.enabled: false
+      xpack.security.audit.enabled: true
+      xpack.security.authc.realms:
+        file.file1:
+          order: 0
+        native.native1:
+          order: 1
+    count: 1
+    name: default
+    podTemplate:
+      spec:
+        volumes:
+          - name: elasticsearch-data
+            emptyDir: {}
+        containers:
+        - name: elasticsearch
+          # resources:
+          #   limits:
+          #     memory: 4Gi
+          #   requests:
+          #     cpu: "1"
+          #     memory: 2Gi
+        securityContext:
+          runAsUser: 1337
+        # tolerations:
+        # - effect: NoSchedule
+        #   key: dedicated
+        #   operator: Equal
+        #   value: eck
+    # volumeClaimTemplates:
+    # - metadata:
+    #     name: elasticsearch-data
+    #   spec:
+    #     accessModes:
+    #     - ReadWriteOnce
+    #     resources:
+    #       requests:
+    #         storage: 40Gi
+  updateStrategy:
+    changeBudget:
+      maxSurge: 2
+      maxUnavailable: 1
+  version: 7.15.1

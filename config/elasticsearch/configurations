@@ -1,0 +1,50 @@
+admin-user:password
+admin-user:$2a$12$Auulm2f3.90MHPwiNERaXucUQVp.Mkol2lZ9u9N8/wkpjIFn7auhy
+
+superuser:admin-user
+
+kubectl port-forward service/quickstart-es-http 9200:9200
+
+curl -k -u 'admin-user:password' https://quickstart-es-http:9200/_ilm/policy | jq
+
+curl -X DELETE -k -u 'admin-user:password' https://quickstart-es-http:9200/_ilm/policy/.deprecation-indexing-ilm-policy
+
+curl -H "Content-Type: application/json" -X PUT -k -u 'admin-user:password' https://quickstart-es-http:9200/_ilm/policy/test_policy --data "test"
+
+curl -X DELETE -k -u 'admin-user:password' https://quickstart-es-http:9200/_ilm/policy/test_policy
+
+curl -k -u 'admin-user:password' https://quickstart-es-http:9200/_ilm/policy | jq
+curl -k -u 'admin-user:password' https://quickstart-es-http:9200/_ilm/policy/ilmpolicy-sample | jq
+
+# the domain is my.domain . crd --> memcacheds.elasticsearch.my.domain
+# CRD for ECK: https://github.com/elastic/cloud-on-k8s/blob/master/deploy/eck-operator/charts/eck-operator-crds/templates/all-crds.yaml
+operator-sdk create api --group elasticsearch --version v1alpha1 --kind Memcached --resource --controller
+
+curl -H "Content-Type: application/json" -X PUT -k -u 'admin-user:password' https://quickstart-es-http:9200/_ilm/policy/test_policy --data @policy.json
+{
+  "policy": {
+    "_meta": {
+      "description": "used for nginx log",
+      "project": {
+        "name": "myProject",
+        "department": "myDepartment"
+      }
+    },
+    "phases": {
+      "warm": {
+        "min_age": "10d",
+        "actions": {
+          "forcemerge": {
+            "max_num_segments": 1
+          }
+        }
+      },
+      "delete": {
+        "min_age": "30d",
+        "actions": {
+          "delete": {}
+        }
+      }
+    }
+  }
+}

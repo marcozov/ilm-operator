@@ -1,0 +1,26 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: debian
+  name: interactive-deployment
+  namespace: ilm-operator-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: debian
+  template:
+    metadata:
+      labels:
+        app: debian
+    spec:
+      containers:
+      - args:
+        - "sleep 9999999"
+        image: debian
+        command: ["/bin/sh", "-c"]
+        imagePullPolicy: IfNotPresent
+        name: debian
+      serviceAccountName: ilm-operator-controller-manager
